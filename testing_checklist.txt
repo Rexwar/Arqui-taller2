@@ -1,0 +1,292 @@
+# Checklist de Verificación Funcional - StreamFlow Microservices
+
+Este documento detalla los puntos de verificación para cada microservicio, basados en los requerimientos del "Taller 2.txt".
+
+---
+
+## 1. Microservicio de Usuarios (gRPC, a través de API Gateway)
+
+### [ ] POST /usuarios - Crear Usuario
+-   **[ ] Cliente - Registro Público:**
+    -   [ ] Permite crear un usuario con rol "Cliente" sin autenticación.
+    -   [ ] Requiere: Nombre, apellido, correo, contraseña, confirmación de contraseña.
+    -   [ ] Valida que la contraseña y la confirmación coincidan.
+    -   [ ] Valida que el correo electrónico sea único.
+    -   [ ] Almacena la contraseña con hashing (no visible en la respuesta).
+    -   [ ] La respuesta incluye los datos del usuario creado (sin contraseña).
+    -   [ ] Falla si el rol es distinto de "Cliente" o "Administrador".
+-   **[ ] Administrador - Registro Protegido:**
+    -   [ ] Falla al intentar crear un "Administrador" sin token de admin.
+    -   [ ] Permite crear un "Administrador" con un token de admin válido.
+    -   [ ] La respuesta incluye los datos del usuario creado (sin contraseña).
+
+### [ ] GET /usuarios/{id} - Obtener Usuario por ID
+-   **[ ] Autenticación:**
+    -   [ ] Falla si no se provee un token de autenticación.
+-   **[ ] Autorización:**
+    -   [ ] Un "Cliente" puede obtener sus propios datos.
+    -   [ ] Falla si un "Cliente" intenta obtener datos de otro usuario.
+    -   [ ] Un "Administrador" puede obtener datos de cualquier usuario (cliente o admin).
+-   **[ ] Respuesta:**
+    -   [ ] La respuesta incluye: ID, nombre, apellido, correo, rol, fecha de registro.
+    -   [ ] La respuesta NUNCA incluye la contraseña.
+
+### [ ] PATCH /usuarios/{id} - Actualizar Usuario
+-   **[ ] Autenticación:**
+    -   [ ] Falla si no se provee un token de autenticación.
+-   **[ ] Autorización:**
+    -   [ ] Un "Cliente" puede actualizar sus propios datos (nombre, apellido, correo).
+    -   [ ] Falla si un "Cliente" intenta actualizar datos de otro usuario.
+    -   [ ] Un "Administrador" puede actualizar datos de cualquier usuario.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Permite actualizar nombre, apellido y correo electrónico.
+    -   [ ] Devuelve un error si se intenta modificar la contraseña a través de este endpoint.
+    -   [ ] La respuesta incluye los datos actualizados del usuario (sin contraseña).
+
+### [ ] DELETE /usuarios/{id} - Eliminar Usuario
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla si no se provee un token de "Administrador".
+    -   [ ] Falla si un "Cliente" intenta eliminar un usuario.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Realiza un soft delete (ej. marcando `deleted_at`).
+    -   [ ] El usuario eliminado no puede iniciar sesión.
+    -   [ ] El usuario eliminado no aparece en la lista de usuarios.
+    -   [ ] La respuesta a la petición de borrado está vacía.
+
+### [ ] GET /usuarios - Listar Todos los Usuarios
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla si no se provee un token de "Administrador".
+    -   [ ] Falla si un "Cliente" intenta listar usuarios.
+-   **[ ] Funcionalidad:**
+    -   [ ] Devuelve una lista de todos los usuarios no eliminados (soft delete).
+    -   [ ] La respuesta por cada usuario incluye: ID, nombre, apellido, correo, rol, fecha de registro (sin contraseña).
+-   **[ ] Búsqueda (Query Params):**
+    -   [ ] Filtra por correo electrónico (búsqueda parcial/exacta).
+    -   [ ] Filtra por nombre y apellido (búsqueda parcial/exacta, combinada).
+
+---
+
+## 2. Microservicio de Autenticación (HTTP)
+
+### [ ] POST /auth/login - Iniciar Sesión
+-   **[ ] Credenciales Válidas:**
+    -   [ ] Devuelve un token JWT y los datos del usuario (sin contraseña) con credenciales correctas.
+-   **[ ] Credenciales Inválidas:**
+    -   [ ] Devuelve un error de autenticación con contraseña incorrecta.
+    -   [ ] Devuelve un error si el usuario no existe.
+-   **[ ] Usuario Eliminado:**
+    -   [ ] Rechaza el inicio de sesión si el usuario ha sido eliminado (soft delete).
+
+### [ ] PATCH /auth/usuarios/{id} - Actualizar Contraseña
+-   **[ ] Autenticación:**
+    -   [ ] Falla si no se provee un token de autenticación.
+-   **[ ] Autorización:**
+    -   [ ] Un "Cliente" puede actualizar su propia contraseña.
+    -   [ ] Falla si un "Cliente" intenta actualizar la contraseña de otro.
+    -   [ ] Un "Administrador" puede actualizar la contraseña de cualquier usuario.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere: contraseña actual, nueva contraseña, confirmación de nueva contraseña.
+    -   [ ] Valida que la contraseña actual sea correcta.
+    -   [ ] Valida que la nueva contraseña y su confirmación coincidan.
+    -   [ ] La respuesta no incluye ninguna contraseña.
+
+### [ ] POST /auth/logout - Cerrar Sesión
+-   **[ ] Autenticación:**
+    -   [ ] Falla si no se provee un token de autenticación.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Añade el token JWT actual a una blacklist.
+    -   [ ] El token añadido a la blacklist ya no puede ser usado para autenticar.
+    -   [ ] La respuesta incluye un mensaje de éxito.
+
+---
+
+## 3. Microservicio de Facturación (gRPC, a través de API Gateway)
+
+### [ ] POST /facturas - Crear Factura
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere: ID de usuario, estado, monto.
+    -   [ ] Valida que el monto sea un entero positivo.
+    -   [ ] Valida que el estado sea "Pendiente", "Pagado" o "Vencido".
+    -   [ ] La respuesta incluye todos los datos de la factura y la fecha de emisión.
+
+### [ ] GET /facturas/{id} - Obtener Factura por ID
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de autenticación.
+    -   [ ] Un "Cliente" puede ver su propia factura.
+    -   [ ] Falla si un "Cliente" intenta ver la factura de otro.
+    -   [ ] Un "Administrador" puede ver cualquier factura.
+-   **[ ] Respuesta:**
+    -   [ ] Incluye: ID factura, estado, ID usuario, monto, fecha de emisión, fecha de pago.
+
+### [ ] PATCH /facturas/{id} - Actualizar Estado de Factura
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Permite actualizar el estado.
+    -   [ ] Si el estado cambia a "Pagado", se registra la fecha de pago.
+    -   [ ] La respuesta incluye los datos de la factura actualizada.
+    -   **[ ] (Integración) Dispara evento para el servicio de correos.**
+
+### [ ] DELETE /facturas/{id} - Eliminar Factura
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Realiza un soft delete.
+    -   [ ] Falla si se intenta eliminar una factura "Pagada".
+
+### [ ] GET /facturas - Listar Facturas por Usuario
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de autenticación.
+    -   [ ] Un "Cliente" solo recibe sus propias facturas.
+    -   [ ] Un "Administrador" puede ver las facturas de cualquier usuario (o todas).
+-   **[ ] Búsqueda (Query Params):**
+    -   [ ] Permite filtrar por estado de la factura.
+
+---
+
+## 4. Microservicio de Videos (gRPC, a través de API Gateway)
+
+### [ ] POST /videos - Subir Vídeo
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere: título, descripción, género.
+    -   [ ] La respuesta incluye los datos del video registrado.
+
+### [ ] GET /videos/{id} - Obtener Video por ID
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Respuesta:**
+    -   [ ] Incluye: ID, título, descripción, género y **cantidad de likes**.
+
+### [ ] PATCH /videos/{id} - Actualizar Video
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Permite actualizar título, descripción y género.
+    -   [ ] Falla si se intenta modificar la cantidad de likes.
+    -   [ ] La respuesta incluye los datos actualizados.
+
+### [ ] DELETE /videos/{id} - Eliminar Video
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Realiza un soft delete.
+    -   [ ] La respuesta está vacía.
+
+### [ ] GET /videos - Listar Todos los Videos
+-   **[ ] Funcionalidad:**
+    -   [ ] No requiere autenticación (implícito, ya que no se menciona restricción).
+    -   [ ] No muestra videos eliminados (soft delete).
+    -   [ ] Cada video en la lista muestra la cantidad de likes.
+-   **[ ] Búsqueda (Query Params):**
+    -   [ ] Permite filtrar por título (parcial).
+    -   [ ] Permite filtrar por género (parcial).
+
+---
+
+## 5. Microservicio de Monitoreo (gRPC, a través de API Gateway)
+
+### [ ] GET /monitoreo/acciones - Listar Acciones
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Respuesta:**
+    -   [ ] Muestra lista de acciones con: ID, ID usuario, URL, método, correo, fecha, acción.
+    -   [ ] ID y correo de usuario pueden estar vacíos si la acción fue no autenticada.
+
+### [ ] GET /monitoreo/errores - Listar Errores
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de "Administrador".
+-   **[ ] Respuesta:**
+    -   [ ] Muestra lista de errores con: ID, ID usuario, correo, fecha, error.
+    -   [ ] ID y correo de usuario pueden estar vacíos.
+
+---
+
+## 6. Microservicio de Listas de Reproducción (gRPC, a través de API Gateway)
+
+### [ ] POST /listas-reproduccion - Crear Lista
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere nombre de la lista.
+
+### [ ] GET /listas-reproduccion - Ver Listas
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Respuesta:**
+    -   [ ] Muestra nombre e ID de las listas del usuario.
+
+### [ ] DELETE /listas-reproduccion/{id} - Eliminar Lista
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de autenticación.
+    -   [ ] Falla si el usuario no es el dueño de la lista.
+
+### [ ] POST /listas-reproduccion/{id}/videos - Añadir Video
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de autenticación.
+    -   [ ] Falla si el usuario no es el dueño de la lista.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere ID del video a añadir.
+
+### [ ] GET /listas-reproduccion/{id}/videos - Ver Videos de Lista
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Respuesta:**
+    -   [ ] Muestra ID y nombre de los videos en la lista.
+
+### [ ] DELETE /listas-reproduccion/{id}/videos - Eliminar Video de Lista
+-   **[ ] Autenticación y Autorización:**
+    -   [ ] Falla sin token de autenticación.
+    -   [ ] Falla si el usuario no es el dueño de la lista.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere ID del video a eliminar.
+
+---
+
+## 7. Microservicio de Interacciones Sociales (gRPC, a través de API Gateway)
+
+### [ ] POST /interacciones/{id}/likes - Dar Like
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere ID del video.
+    -   [ ] Permite múltiples likes del mismo usuario al mismo video.
+
+### [ ] POST /interacciones/{id}/comentarios - Dejar Comentario
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere ID del video y texto del comentario.
+
+### [ ] GET /interacciones/{id} - Obtener Likes y Comentarios
+-   **[ ] Autenticación:**
+    -   [ ] Falla sin token de autenticación.
+-   **[ ] Lógica de Negocio:**
+    -   [ ] Requiere ID del video.
+    -   [ ] Devuelve los likes y comentarios del video.
+
+---
+
+## 8. Microservicio de Envío de Correos (gRPC, no expuesto)
+
+-   **[ ] Enviar Correo de Actualización de Factura:**
+    -   [ ] (Prueba de integración) Se dispara automáticamente cuando una factura se actualiza a "Pagado".
+    -   [ ] (Verificar logs) El servicio de correos recibe el evento y simula/envía un correo con ID, monto y estado de la factura.
+
+---
+
+## 9. Seeder
+
+-   **[ ] Ejecución:**
+    -   [ ] El `README.md` explica cómo ejecutar el seeder.
+-   **[ ] Datos Generados:**
+    -   [ ] Crea entre 100 y 200 usuarios.
+    -   [ ] Crea entre 300 y 400 facturas.
+    -   [ ] Crea entre 400 y 600 videos.
+    -   [ ] Crea entre 50 y 100 likes.
+    -   [ ] Crea entre 20 y 50 comentarios.
+-   **[ ] Credenciales de Admin:**
+    -   [ ] El `README.md` indica las credenciales de al menos un usuario "Administrador".

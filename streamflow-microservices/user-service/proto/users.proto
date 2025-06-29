@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  // Mutations
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (EmptyResponse);
+
+  // Queries
+  rpc GetUserById(GetUserByIdRequest) returns (UserResponse);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserAuthResponse);
+  rpc ListAllUsers(ListAllUsersRequest) returns (ListAllUsersResponse);
+}
+
+// General Messages
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string role = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message EmptyResponse {}
+
+// CreateUser Messages
+message CreateUserRequest {
+  string name = 1;
+  string lastname = 2;
+  string email = 3;
+  string password = 4;
+  string confirmPassword = 5;
+  string role = 6;
+}
+
+// UpdateUser Messages
+message UpdateUserRequest {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+}
+
+// DeleteUser Messages
+message DeleteUserRequest {
+  string id = 1;
+}
+
+// GetUserById Messages
+message GetUserByIdRequest {
+  string id = 1;
+}
+
+// GetUserByEmail Messages
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UserAuthResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string password = 5; // Hashed password for auth service
+  string role = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// ListAllUsers Messages
+message ListAllUsersRequest {
+  // Optional filters
+  string search = 1;
+}
+
+message ListAllUsersResponse {
+  repeated UserResponse users = 1;
+}

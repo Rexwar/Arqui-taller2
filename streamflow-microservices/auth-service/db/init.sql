@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS token_blacklist (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR(512) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL
+);

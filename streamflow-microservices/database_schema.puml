@@ -1,0 +1,51 @@
+@startuml
+' Diagrama de Entidad-Relación para las bases de datos de StreamFlow
+
+' Ocultar la sombra de las cajas y ajustar la apariencia
+skinparam shadowing false
+skinparam handwritten false
+skinparam classAttributeIconSize 0
+
+' --- Definición de Entidades (Tablas) ---
+
+' Tabla para el User-Service (MySQL)
+entity "users" as Users {
+  + id: INT <<PK>>
+  --
+  name: VARCHAR
+  lastname: VARCHAR
+  email: VARCHAR <<UNIQUE>>
+  password: VARCHAR
+  role: VARCHAR
+  created_at: TIMESTAMP
+}
+
+' Tabla para el Playlist-Service (PostgreSQL)
+entity "playlists" as Playlists {
+  + id: SERIAL <<PK>>
+  --
+  user_id: INT <<FK>>
+  name: VARCHAR
+  video_ids: INT[]
+}
+
+' Tabla para el Billing-Service (MariaDB)
+entity "invoices" as Invoices {
+  + id: INT <<PK>>
+  --
+  user_id: INT <<FK>>
+  amount: DECIMAL
+  due_date: DATE
+  paid: BOOLEAN
+  created_at: TIMESTAMP
+}
+
+' --- Definición de Relaciones ---
+
+' Un usuario puede tener muchas playlists
+Users ||--o{ Playlists : "has"
+
+' Un usuario puede tener muchas facturas
+Users ||--o{ Invoices : "has"
+
+@enduml
