@@ -25,15 +25,20 @@ try {
     oneofs: true
   });
   console.log('Proto file loaded successfully.');
-  console.log('Inspecting package definition:', JSON.stringify(packageDefinition, null, 2));
+  //console.log('Inspecting package definition:', JSON.stringify(packageDefinition, null, 2));
   const userProto = grpc.loadPackageDefinition(packageDefinition).user;
   if (!userProto) {
       console.error('Failed to load user package from proto file.');
       process.exit(1);
   }
   console.log('User package loaded successfully.');
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const userServiceUrl = process.env.USER_SERVICE_URL || (isTestEnv ? 'localhost:50051' : 'user-service:50051');
+
+  console.log(`Connecting to User Service at: ${userServiceUrl}`);
+
   var userServiceClient = new userProto.UserService(
-    process.env.USER_SERVICE_URL || 'user-service:50051',
+    userServiceUrl,
     grpc.credentials.createInsecure()
   );
   console.log('gRPC client for User Service created successfully.');
@@ -63,44 +68,122 @@ services.forEach(({ route, target }) => {
   }));
 });
 
+// --- Authentication Middleware (Simulated) ---
+const authenticate = (req, res, next) => {
+  req.userId = req.headers['x-user-id'] || null;
+  req.userRole = req.headers['x-user-role'] || 'Cliente'; // Default to 'Cliente' if not provided
+  next();
+};
+
+app.use('/usuarios', authenticate); // Apply middleware to all user routes
+
+// --- gRPC Metadata Helper ---
+const createMetadata = (req) => {
+  const metadata = new grpc.Metadata();
+  if (req.userId) metadata.set('x-user-id', String(req.userId)); // Ensure it's a string
+  if (req.userRole) metadata.set('x-user-role', req.userRole);
+  return metadata;
+};
+
+// --- gRPC Error Handler ---
+const handleGrpcError = (res, error) => {
+  console.error('gRPC Error:', error.details || error.message);
+  switch (error.code) {
+    case grpc.status.INVALID_ARGUMENT:
+      return res.status(400).json({ error: error.details });
+    case grpc.status.NOT_FOUND:
+      return res.status(404).json({ error: error.details });
+    case grpc.status.ALREADY_EXISTS:
+      return res.status(409).json({ error: error.details });
+    case grpc.status.PERMISSION_DENIED:
+      return res.status(403).json({ error: error.details });
+    case grpc.status.UNAUTHENTICATED:
+      return res.status(401).json({ error: error.details });
+    default:
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
 // --- gRPC Routes for User Service ---
+
+// Create User
 app.post('/usuarios', (req, res) => {
-  console.log('Received POST /usuarios request');
   const { nombre, apellido, email, password, confirmacion_password, rol } = req.body;
-  console.log('Request body:', req.body);
-  
-  const createUserRequest = {
+  const metadata = createMetadata(req);
+  const request = {
     name: nombre,
     lastname: apellido,
-    email: email,
-    password: password,
+    email,
+    password,
     confirmPassword: confirmacion_password,
     role: rol
   };
 
-  console.log('Calling gRPC createUser with:', createUserRequest);
-  try {
-    userServiceClient.createUser(createUserRequest, (error, response) => {
-      if (error) {
-        console.error('gRPC Error received:', error); // Log the full error object
-        switch (error.code) {
-          case grpc.status.INVALID_ARGUMENT:
-            return res.status(400).json({ error: error.details });
-          case grpc.status.ALREADY_EXISTS:
-            return res.status(409).json({ error: error.details });
-          default:
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
-      } else {
-        console.log('gRPC response received:', response);
-        const { password, ...user } = response;
-        return res.status(201).json(user);
-      }
+  userServiceClient.createUser(request, metadata, (error, response) => {
+    if (error) return handleGrpcError(res, error);
+    const { password, ...user } = response;
+    res.status(201).json(user);
+  });
+});
+
+// Get User by ID
+app.get('/usuarios/:id', (req, res) => {
+  const metadata = createMetadata(req);
+  const request = { id: req.params.id };
+
+  userServiceClient.getUserById(request, metadata, (error, response) => {
+    if (error) return handleGrpcError(res, error);
+    const { password, ...user } = response;
+    res.status(200).json(user);
+  });
+});
+
+// List All Users
+app.get('/usuarios', (req, res) => {
+  const { name_lastname, email } = req.query;
+  const metadata = createMetadata(req);
+  const request = { name_lastname, email };
+
+  userServiceClient.listAllUsers(request, metadata, (error, response) => {
+    if (error) return handleGrpcError(res, error);
+    // Sanitize password from all users in the list
+    const users = response.users.map(u => {
+      const { password, ...user } = u;
+      return user;
     });
-  } catch (e) {
-    console.error('Synchronous error during gRPC call:', e);
-    res.status(500).json({ error: 'Failed to call user service.' });
-  }
+    res.status(200).json({ users });
+  });
+});
+
+// Update User
+app.put('/usuarios/:id', (req, res) => {
+  const { nombre, apellido, email, password } = req.body;
+  const metadata = createMetadata(req);
+  const request = {
+    id: req.params.id,
+    name: nombre,
+    lastname: apellido,
+    email,
+    password
+  };
+
+  userServiceClient.updateUser(request, metadata, (error, response) => {
+    if (error) return handleGrpcError(res, error);
+    const { password, ...user } = response;
+    res.status(200).json(user);
+  });
+});
+
+// Delete User
+app.delete('/usuarios/:id', (req, res) => {
+  const metadata = createMetadata(req);
+  const request = { id: req.params.id };
+
+  userServiceClient.deleteUser(request, metadata, (error, response) => {
+    if (error) return handleGrpcError(res, error);
+    res.status(200).json(response);
+  });
 });
 
 
@@ -114,6 +197,11 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 8088;
-app.listen(PORT, () => {
-  console.log(`API Gateway escuchando en puerto ${PORT}`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`API Gateway escuchando en puerto ${PORT}`);
+  });
+}
+
+module.exports = app;

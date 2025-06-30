@@ -1,0 +1,191 @@
+{
+    "info": {
+        "_postman_id": "a89a5e44-7191-4435-a1b3-44a2c5789c4c",
+        "name": "User Service (gRPC)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Create User",
+            "item": [
+                {
+                    "name": "Create Client User (Public)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "grpc",
+                            "grpc": {
+                                "methodName": "CreateUser",
+                                "serviceName": "user.UserService",
+                                "message": "{\n  \"name\": \"Test\",\n  \"lastname\": \"Client\",\n  \"email\": \"client.test@example.com\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\",\n  \"role\": \"Cliente\"\n}"
+                            }
+                        },
+                        "url": {
+                            "raw": "grpc://localhost:50051/user.UserService/CreateUser",
+                            "protocol": "grpc",
+                            "host": ["localhost:50051"],
+                            "path": ["user.UserService", "CreateUser"]
+                        },
+                        "description": "Creates a new user with the 'Cliente' role. This endpoint should be public and not require metadata."
+                    }
+                },
+                {
+                    "name": "Create Admin User (Admin Required)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "x-user-id", "value": "1" },
+                            { "key": "x-user-role", "value": "Administrador" }
+                        ],
+                        "body": {
+                            "mode": "grpc",
+                            "grpc": {
+                                "methodName": "CreateUser",
+                                "serviceName": "user.UserService",
+                                "message": "{\n  \"name\": \"New\",\n  \"lastname\": \"Admin\",\n  \"email\": \"admin.new@example.com\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\",\n  \"role\": \"Administrador\"\n}"
+                            }
+                        },
+                        "url": {
+                            "raw": "grpc://localhost:50051/user.UserService/CreateUser",
+                            "protocol": "grpc",
+                            "host": ["localhost:50051"],
+                            "path": ["user.UserService", "CreateUser"]
+                        },
+                        "description": "Creates a new user with the 'Administrador' role. Requires admin metadata for authorization."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Get User",
+            "item": [
+                {
+                    "name": "Get User By ID (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "x-user-id", "value": "1" },
+                            { "key": "x-user-role", "value": "Administrador" }
+                        ],
+                        "body": {
+                            "mode": "grpc",
+                            "grpc": {
+                                "methodName": "GetUserById",
+                                "serviceName": "user.UserService",
+                                "message": "{\n  \"id\": \"2\"\n}"
+                            }
+                        },
+                        "url": {
+                            "raw": "grpc://localhost:50051/user.UserService/GetUserById",
+                            "protocol": "grpc",
+                            "host": ["localhost:50051"],
+                            "path": ["user.UserService", "GetUserById"]
+                        },
+                        "description": "Admin gets another user's details by their ID."
+                    }
+                },
+                {
+                    "name": "Get User By Email (Internal Auth)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "grpc",
+                            "grpc": {
+                                "methodName": "GetUserByEmail",
+                                "serviceName": "user.UserService",
+                                "message": "{\n  \"email\": \"client.test@example.com\"\n}"
+                            }
+                        },
+                        "url": {
+                            "raw": "grpc://localhost:50051/user.UserService/GetUserByEmail",
+                            "protocol": "grpc",
+                            "host": ["localhost:50051"],
+                            "path": ["user.UserService", "GetUserByEmail"]
+                        },
+                        "description": "Gets a user by email, including their hashed password. Typically used by an internal authentication service."
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Update User (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "x-user-id", "value": "1" },
+                    { "key": "x-user-role", "value": "Administrador" }
+                ],
+                "body": {
+                    "mode": "grpc",
+                    "grpc": {
+                        "methodName": "UpdateUser",
+                        "serviceName": "user.UserService",
+                        "message": "{\n  \"id\": \"2\",\n  \"name\": \"Updated Name by Admin\"\n}"
+                    }
+                },
+                "url": {
+                    "raw": "grpc://localhost:50051/user.UserService/UpdateUser",
+                    "protocol": "grpc",
+                    "host": ["localhost:50051"],
+                    "path": ["user.UserService", "UpdateUser"]
+                },
+                "description": "Admin updates another user's information."
+            }
+        },
+        {
+            "name": "Delete User (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "x-user-id", "value": "1" },
+                    { "key": "x-user-role", "value": "Administrador" }
+                ],
+                "body": {
+                    "mode": "grpc",
+                    "grpc": {
+                        "methodName": "DeleteUser",
+                        "serviceName": "user.UserService",
+                        "message": "{\n  \"id\": \"2\"\n}"
+                    }
+                },
+                "url": {
+                    "raw": "grpc://localhost:50051/user.UserService/DeleteUser",
+                    "protocol": "grpc",
+                    "host": ["localhost:50051"],
+                    "path": ["user.UserService", "DeleteUser"]
+                },
+                "description": "Admin soft-deletes a user."
+            }
+        },
+        {
+            "name": "List All Users (Admin)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "x-user-id", "value": "1" },
+                    { "key": "x-user-role", "value": "Administrador" }
+                ],
+                "body": {
+                    "mode": "grpc",
+                    "grpc": {
+                        "methodName": "ListAllUsers",
+                        "serviceName": "user.UserService",
+                        "message": "{}"
+                    }
+                },
+                "url": {
+                    "raw": "grpc://localhost:50051/user.UserService/ListAllUsers",
+                    "protocol": "grpc",
+                    "host": ["localhost:50051"],
+                    "path": ["user.UserService", "ListAllUsers"]
+                },
+                "description": "Admin lists all users in the system. Supports optional filters in the message body."
+            }
+        }
+    ],
+    "protocolProfileBehavior": {
+        "disableBodyPruning": true
+    }
+}

@@ -22,7 +22,6 @@ message UserResponse {
   string email = 4;
   string role = 5;
   string created_at = 6;
-  string updated_at = 7;
 }
 
 message EmptyResponse {}
@@ -52,7 +51,9 @@ message DeleteUserRequest {
 
 // GetUserById Messages
 message GetUserByIdRequest {
-  string id = 1;
+  string id = 1;             // ID del usuario a consultar
+  string requester_id = 2;   // ID del usuario autenticado (el que hace la petición)
+  string requester_role = 3; // Rol del usuario autenticado
 }
 
 // GetUserByEmail Messages
@@ -68,13 +69,13 @@ message UserAuthResponse {
   string password = 5; // Hashed password for auth service
   string role = 6;
   string created_at = 7;
-  string updated_at = 8;
 }
 
 // ListAllUsers Messages
 message ListAllUsersRequest {
   // Optional filters
-  string search = 1;
+  string name_lastname = 1; // Search by name and/or lastname
+  string email = 2;         // Search by email
 }
 
 message ListAllUsersResponse {
