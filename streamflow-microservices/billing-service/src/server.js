@@ -3,6 +3,7 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const { connectDB, sequelize } = require('./config/database');
 const billingService = require('./services/billing');
+const { connectRabbitMQ } = require('./utils/messageQueue');
 
 const PROTO_PATH = __dirname + '/../proto/billing.proto';
 
@@ -28,7 +29,8 @@ const startServer = async () => {
   try {
     await connectDB();
     await sequelize.sync(); // Sincroniza los modelos con la base de datos
-    console.log(' Modelos sincronizados con la base de datos.');
+    console.log('Modelos sincronizados con la base de datos.');
+    await connectRabbitMQ(); // Conectar a RabbitMQ
 
     server.bindAsync(`0.0.0.0:${PORT}`, grpc.ServerCredentials.createInsecure(), (err, port) => {
       if (err) {

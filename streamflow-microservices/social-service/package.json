@@ -2,11 +2,12 @@
   "name": "social-service",
   "version": "1.0.0",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
   },
   "dependencies": {
-    "express": "^4.18.0",
+    "@grpc/grpc-js": "^1.8.0",
+    "@grpc/proto-loader": "^0.7.0",
     "mongoose": "^7.0.0",
     "dotenv": "^16.0.0"
   },

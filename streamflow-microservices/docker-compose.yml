@@ -86,6 +86,22 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running", "-q"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
   # Application Services
   user-service:
     build:
@@ -101,6 +117,8 @@ services:
       retries: 5
     depends_on:
       mysql-user:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     env_file:
       - ./user-service/.env
@@ -130,12 +148,12 @@ services:
       context: .
       dockerfile: ./playlist-service/Dockerfile
     ports:
-      - "3002:3002"
+      - "50052:50052"
     depends_on:
       postgres-playlist:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      test: ["CMD", "grpc-health-probe", "-addr=:50052"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -166,12 +184,12 @@ services:
       context: .
       dockerfile: ./social-service/Dockerfile
     ports:
-      - "3004:3004"
+      - "50053:50053"
     depends_on:
       mongodb-social:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      test: ["CMD", "grpc-health-probe", "-addr=:50053"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -197,6 +215,8 @@ services:
       timeout: 5s
       retries: 5
 
+
+
   billing-service:
     build:
       context: .
@@ -205,6 +225,8 @@ services:
       - "50054:50054"
     depends_on:
       mariadb-billing:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "grpc-health-probe", "-addr=:50054"]
@@ -220,10 +242,16 @@ services:
       context: .
       dockerfile: ./monitoring-service/Dockerfile
     ports:
-      - "3006:3006"
+      - "50055:50055"
     depends_on:
       mongodb-monitoring:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc-health-probe", "-addr=:50055"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     env_file:
       - ./monitoring-service/.env
 
@@ -231,14 +259,9 @@ services:
     build:
       context: .
       dockerfile: ./email-service/Dockerfile
-    ports:
-      - "3007:3007"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - ./email-service/.env
 
@@ -283,3 +306,4 @@ volumes:
   mongodb_monitoring_data:
   mongodb_social_data:
   mariadb-billing-data:
+  rabbitmq_data:

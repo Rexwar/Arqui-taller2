@@ -1,5 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const Invoice = require('../models/Invoice');
+const { publishToQueue } = require('../utils/messageQueue');
+const userServiceClient = require('../clients/userServiceClient');
 
 // --- Helper Functions ---
 
@@ -123,7 +125,25 @@ const billingService = {
 
       await invoice.update(updateData);
 
-      callback(null, toInvoiceResponse(invoice));
+      // Obtener el email del usuario para enviar la notificación
+      userServiceClient.GetUserById({ id: invoice.userId }, (err, userResponse) => {
+        if (err || !userResponse) {
+          console.error('Error al obtener los detalles del usuario para la notificación:', err);
+          // A pesar del error, la operación principal fue exitosa
+          return callback(null, toInvoiceResponse(invoice));
+        }
+
+        // Publicar mensaje en RabbitMQ
+        const message = {
+          id: invoice.id,
+          userEmail: userResponse.email,
+          amount: invoice.amount,
+          status: invoice.status,
+        };
+        publishToQueue('invoice_updated_queue', message);
+
+        callback(null, toInvoiceResponse(invoice));
+      });
     } catch (err) {
 
       callback({ code: grpc.status.INTERNAL, details: 'Error al actualizar la factura.' });

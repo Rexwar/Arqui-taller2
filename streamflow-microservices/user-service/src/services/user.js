@@ -1,6 +1,7 @@
 const grpc = require('@grpc/grpc-js');
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/prisma');
+const { publishToQueue } = require('../utils/messageQueue');
 
 // --- Helper Functions ---
 const getRequesterInfo = (call) => {
@@ -45,6 +46,10 @@ const userService = {
         data: { name, lastname, email, password: hashedPassword, role }
       });
       
+            // Publicar mensaje en RabbitMQ para notificar a otros servicios
+      const message = { id: newUser.id, email: newUser.email, name: newUser.name };
+      publishToQueue('user_created_queue', message);
+
       const { password: _, ...userResponse } = newUser;
       // debe retornar los datos del usuario creado
       callback(null, userResponse);

@@ -2,6 +2,7 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const { HealthImplementation, service: healthService } = require('grpc-health-check');
 const userService = require('./services/user');
+const { connectRabbitMQ } = require('./utils/messageQueue');
 require('dotenv').config();
 
 // --- Proto Loading ---
@@ -29,12 +30,18 @@ server.addService(healthService, healthImpl);
 server.addService(userProto.UserService.service, userService);
 
 // --- Start Server ---
-const port = process.env.PORT || 50051;
-server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (err, boundPort) => {
-  if (err) {
-    console.error('Failed to bind server:', err);
-    return;
-  }
-  console.log(`User service running on port ${boundPort}`);
-  server.start();
-});
+const startServer = async () => {
+  await connectRabbitMQ(); // Conectar a RabbitMQ
+
+  const port = process.env.PORT || 50051;
+  server.bindAsync(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure(), (err, boundPort) => {
+    if (err) {
+      console.error('Failed to bind server:', err);
+      return;
+    }
+    console.log(`User service running on port ${boundPort}`);
+    server.start();
+  });
+};
+
+startServer();

@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package playlist;
+
+service PlaylistService {
+  rpc CreatePlaylist(CreatePlaylistRequest) returns (PlaylistResponse);
+  rpc AddVideoToPlaylist(AddVideoToPlaylistRequest) returns (SimpleResponse);
+  rpc RemoveVideoFromPlaylist(RemoveVideoFromPlaylistRequest) returns (SimpleResponse);
+  rpc GetPlaylists(GetPlaylistsRequest) returns (GetPlaylistsResponse);
+  rpc GetPlaylistVideos(GetPlaylistVideosRequest) returns (GetPlaylistVideosResponse);
+  rpc DeletePlaylist(DeletePlaylistRequest) returns (SimpleResponse);
+}
+
+message Playlist {
+  string id = 1;
+  string name = 2;
+  string user_id = 3;
+}
+
+message Video {
+  string id = 1;
+  string name = 2;
+}
+
+message SimpleResponse {
+  string message = 1;
+}
+
+message CreatePlaylistRequest {
+  string name = 1;
+}
+
+message PlaylistResponse {
+  string id = 1;
+  string name = 2;
+}
+
+message AddVideoToPlaylistRequest {
+  string playlist_id = 1;
+  string video_id = 2;
+}
+
+message RemoveVideoFromPlaylistRequest {
+  string playlist_id = 1;
+  string video_id = 2;
+}
+
+message GetPlaylistsRequest {}
+
+message GetPlaylistsResponse {
+  repeated Playlist playlists = 1;
+}
+
+message GetPlaylistVideosRequest {
+  string playlist_id = 1;
+}
+
+message GetPlaylistVideosResponse {
+  repeated Video videos = 1;
+}
+
+message DeletePlaylistRequest {
+  string playlist_id = 1;
+}
