@@ -1,0 +1,32 @@
+{
+    "info": {
+        "_postman_id": "flow-12-auth-logout",
+        "name": "Flow 12: User Authentication and Logout",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Register New User",
+            "event": [{"listen": "prerequest", "script": {"exec": ["pm.environment.set(\"user12Email\", pm.variables.replaceIn('user12-{{$randomFirstName}}@example.com'));"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"name\": \"Flow 12 User\",\n    \"email\": \"{{user12Email}}\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"]}}
+        },
+        {
+            "name": "2. Login and Save Token",
+            "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.environment.set(\"clientAuthToken12\", jsonData.token);"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"email\": \"{{user12Email}}\",\n    \"password\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}}
+        },
+        {
+            "name": "3. Access Protected Route (Get Profile)",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{clientAuthToken12}}", "type": "string"}]}, "method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/usuarios/me", "host": ["{{baseUrl}}"], "path": ["usuarios", "me"]}}
+        },
+        {
+            "name": "4. Logout (Blacklist Token)",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{clientAuthToken12}}", "type": "string"}]}, "method": "POST", "header": [], "url": {"raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"]}}
+        },
+        {
+            "name": "5. Attempt to Access Protected Route with Blacklisted Token",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{clientAuthToken12}}", "type": "string"}]}, "method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/usuarios/me", "host": ["{{baseUrl}}"], "path": ["usuarios", "me"]}}
+        }
+    ],
+    "variable": [{"key": "baseUrl", "value": "http://localhost:8088"}]
+}

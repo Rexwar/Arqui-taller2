@@ -9,14 +9,20 @@ const videoSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  url: {
+  genre: {
     type: String,
     required: true,
   },
-  uploadedAt: {
-    type: Date,
-    default: Date.now,
+  likes: {
+    type: Number,
+    default: 0,
   },
-});
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
+}, { timestamps: true });
 
-module.exports = mongoose.model('Video', videoSchema);
+const Video = mongoose.model('Video', videoSchema);
+
+module.exports = Video;

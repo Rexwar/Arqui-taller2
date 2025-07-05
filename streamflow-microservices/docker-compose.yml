@@ -9,7 +9,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./auth-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres-auth-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
@@ -44,7 +43,6 @@ services:
     ports:
       - "3308:3306"
     volumes:
-      - ./user-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql-user-data:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -prootpassword"]
@@ -181,17 +179,39 @@ services:
     env_file:
       - ./social-service/.env
 
+  mariadb-billing:
+    image: mariadb:10.6
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: billing_db
+      MYSQL_USER: billing_user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb-billing-data:/var/lib/mysql
+      - ./billing-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   billing-service:
     build:
       context: .
       dockerfile: ./billing-service/Dockerfile
     ports:
-      - "3005:3005"
+      - "50054:50054"
+    depends_on:
+      mariadb-billing:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      test: ["CMD", "grpc-health-probe", "-addr=:50054"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     env_file:
       - ./billing-service/.env
 
@@ -262,3 +282,4 @@ volumes:
   mongodb_video_data:
   mongodb_monitoring_data:
   mongodb_social_data:
+  mariadb-billing-data:

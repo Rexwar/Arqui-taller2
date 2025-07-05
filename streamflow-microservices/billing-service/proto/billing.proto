@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package billing;
+
+import "google/protobuf/timestamp.proto";
+
+// Service definition for billing operations
+service BillingService {
+  rpc CreateInvoice(CreateInvoiceRequest) returns (InvoiceResponse);
+  rpc GetInvoiceById(GetInvoiceByIdRequest) returns (InvoiceResponse);
+  rpc UpdateInvoiceStatus(UpdateInvoiceStatusRequest) returns (InvoiceResponse);
+  rpc DeleteInvoice(DeleteInvoiceRequest) returns (DeleteInvoiceResponse);
+  rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+}
+
+// Represents a single invoice
+message Invoice {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  string amount = 4;
+  string emission_date = 5;
+  string payment_date = 6;
+}
+
+// Request to create a new invoice
+message CreateInvoiceRequest {
+  string user_id = 1;
+  string status = 2;
+  string amount = 3;
+}
+
+
+// Generic response for single invoice operations
+message InvoiceResponse {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  string amount = 4;
+  string emission_date = 5;
+  string payment_date = 6;
+}
+
+// Request to get an invoice by its ID
+message GetInvoiceByIdRequest {
+  string id = 1;
+}
+
+// Request to update an invoice's status
+message UpdateInvoiceStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+// Request to delete an invoice
+message DeleteInvoiceRequest {
+  string id = 1;
+}
+
+// Response for the delete operation
+message DeleteInvoiceResponse {
+  string message = 1;
+}
+
+// Request to list invoices, with optional filters
+message ListInvoicesRequest {
+  string user_id = 1; // User ID for whom to list invoices
+  optional string status = 2; // Filter by status
+}
+
+// Response containing a list of invoices
+message ListInvoicesResponse {
+  repeated InvoiceResponse invoices = 1;
+}

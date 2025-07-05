@@ -1,0 +1,230 @@
+{
+    "info": {
+        "_postman_id": "flow-09-admin-manages-invoices",
+        "name": "Flow 09: Admin Manages Invoices",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Admin Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set(\"adminAuthToken\", jsonData.token);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"adminpass\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Register New Client User",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "pm.environment.set(\"user9Email\", pm.variables.replaceIn('user9-{{$randomFirstName}}@example.com'));"
+                        ],
+                        "type": "text/javascript"
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set(\"userId9\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"User Flow 9\",\n    \"email\": \"{{user9Email}}\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/usuarios",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "usuarios"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "3. Admin Creates Invoice for User",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set(\"invoiceId9\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{adminAuthToken}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"userId\": \"{{userId9}}\",\n    \"amount\": 100.50,\n    \"dueDate\": \"2024-12-31\",\n    \"details\": \"Monthly Subscription\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/billing/invoices",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "billing",
+                        "invoices"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "4. Admin Gets All Invoices",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{adminAuthToken}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/billing/invoices",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "billing",
+                        "invoices"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "5. Admin Gets Invoice by ID",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{adminAuthToken}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/billing/invoices/{{invoiceId9}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "billing",
+                        "invoices",
+                        "{{invoiceId9}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "6. Admin Deletes Invoice",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{adminAuthToken}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/billing/invoices/{{invoiceId9}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "billing",
+                        "invoices",
+                        "{{invoiceId9}}"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8088"
+        }
+    ]
+}

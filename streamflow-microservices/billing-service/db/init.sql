@@ -1,8 +1,11 @@
 CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    due_date DATE NOT NULL,
-    paid BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user_id VARCHAR(255) NOT NULL,
+    status ENUM('Pendiente', 'Pagado', 'Vencido') NOT NULL,
+    amount INT NOT NULL,
+    emission_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    payment_date DATETIME NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL
 );

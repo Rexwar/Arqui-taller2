@@ -7,6 +7,7 @@ service UserService {
   rpc CreateUser(CreateUserRequest) returns (UserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (EmptyResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (EmptyResponse);
 
   // Queries
   rpc GetUserById(GetUserByIdRequest) returns (UserResponse);
@@ -21,7 +22,6 @@ message UserResponse {
   string lastname = 3;
   string email = 4;
   string role = 5;
-  string created_at = 6;
 }
 
 message EmptyResponse {}
@@ -44,6 +44,12 @@ message UpdateUserRequest {
   string email = 4;
 }
 
+// ChangePassword Messages
+message ChangePasswordRequest {
+  string id = 1;
+  string password = 2; // New plain text password
+}
+
 // DeleteUser Messages
 message DeleteUserRequest {
   string id = 1;
@@ -51,9 +57,17 @@ message DeleteUserRequest {
 
 // GetUserById Messages
 message GetUserByIdRequest {
-  string id = 1;             // ID del usuario a consultar
-  string requester_id = 2;   // ID del usuario autenticado (el que hace la petición)
-  string requester_role = 3; // Rol del usuario autenticado
+  string id = 1;     // ID del usuario a consultar
+}
+
+// GetUserById Response
+message GetUserByIdResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string role = 5;
+  string created_at = 6;
 }
 
 // GetUserByEmail Messages
@@ -68,7 +82,6 @@ message UserAuthResponse {
   string email = 4;
   string password = 5; // Hashed password for auth service
   string role = 6;
-  string created_at = 7;
 }
 
 // ListAllUsers Messages

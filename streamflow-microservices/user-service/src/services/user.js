@@ -23,6 +23,7 @@ const userService = {
 
       if (role === 'Administrador') {
         const requester = getRequesterInfo(call);
+        //console.log('Requester:', requester);
         if (!requester.id || requester.role !== 'Administrador') {
           return callback({ code: grpc.status.PERMISSION_DENIED, details: 'No tiene permisos para crear un administrador.' });
         }
@@ -45,7 +46,8 @@ const userService = {
       });
       
       const { password: _, ...userResponse } = newUser;
-      callback(null, { user: userResponse });
+      // debe retornar los datos del usuario creado
+      callback(null, userResponse);
 
     } catch (error) {
       console.error('Error creating user:', error);
@@ -86,17 +88,14 @@ const userService = {
       const { email } = call.request;
       const user = await prisma.user.findFirst({
         where: { email },
-        select: { id: true, name: true, lastname: true, email: true, role: true, created_at: true}
+        select: { id: true, name: true, lastname: true, email: true, role: true, password: true, created_at: true}
       });
 
       if (!user) {
         return callback({ code: grpc.status.NOT_FOUND, details: 'Usuario no encontrado.' });
       }
 
-      callback(null, {
-        ...user,
-        created_at: user.created_at.toISOString(), // si es Date
-      });
+      callback(null, user);
     } catch (error) {
       console.error('Error getting user by email:', error);
       callback({ code: grpc.status.INTERNAL, details: 'Error interno al obtener el usuario.' });
@@ -106,7 +105,7 @@ const userService = {
   updateUser: async (call, callback) => {
     try {
       const userId = parseInt(call.request.id, 10);
-      const { name, lastname, email, password, role } = call.request;
+      const { name, lastname, email, role } = call.request;
       const requester = getRequesterInfo(call);
 
       if (requester.role === 'Cliente' && requester.id != userId) {
@@ -128,7 +127,6 @@ const userService = {
         updateData.email = email;
       }
       if (role) updateData.role = role;
-      if (password) updateData.password = await bcrypt.hash(password, 10);
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -136,10 +134,13 @@ const userService = {
         select: { id: true, name: true, lastname: true, email: true, role: true }
       });
 
-      callback(null, { user: updatedUser });
+      callback(null, updatedUser);
     } catch (error) {
-      if (error.code === 'P2025') { // Prisma's code for record not found
+      if (error.code === 'P2025') {
         return callback({ code: grpc.status.NOT_FOUND, details: 'Usuario no encontrado.' });
+      }
+      if (error.code === 'P2002') {
+        return callback({ code: grpc.status.ALREADY_EXISTS, details: 'El correo electrónico ya está en uso.' });
       }
       console.error('Error updating user:', error);
       callback({ code: grpc.status.INTERNAL, details: 'Error interno al actualizar el usuario.' });
@@ -155,9 +156,8 @@ const userService = {
         return callback({ code: grpc.status.PERMISSION_DENIED, details: 'No tiene permisos para eliminar usuarios.' });
       }
       
-      await prisma.user.update({
-        where: { id: userId },
-        data: { deleted_at: new Date() }
+      await prisma.user.delete({
+        where: { id: userId }
       });
 
       callback(null, { message: 'Usuario eliminado correctamente.' });
@@ -202,6 +202,32 @@ const userService = {
     } catch (error) {
       console.error('Error listing users:', error);
       callback({ code: grpc.status.INTERNAL, details: 'Error interno al listar los usuarios.' });
+    }
+  },
+
+  changePassword: async (call, callback) => {
+    try {
+      const { id, password } = call.request;
+      const userId = parseInt(id, 10);
+
+      if (!password) {
+        return callback({ code: grpc.status.INVALID_ARGUMENT, details: 'La nueva contraseña es requerida.' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      });
+
+      callback(null, {});
+    } catch (error) {
+      if (error.code === 'P2025') {
+        return callback({ code: grpc.status.NOT_FOUND, details: 'Usuario no encontrado.' });
+      }
+      console.error('Error changing password:', error);
+      callback({ code: grpc.status.INTERNAL, details: 'Error interno al cambiar la contraseña.' });
     }
   }
 };

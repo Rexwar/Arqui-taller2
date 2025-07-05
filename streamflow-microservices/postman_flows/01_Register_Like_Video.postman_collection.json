@@ -1,0 +1,56 @@
+{
+    "info": {
+        "_postman_id": "flow-01-register-like",
+        "name": "Flow 01: Register and Like Video",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Get All Videos and Save One ID",
+            "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData && jsonData.length > 0) { pm.environment.set(\"videoId\", jsonData[0].id); }"], "type": "text/javascript"}}],
+            "request": {"method": "GET", "header": [], "url": {"raw": "{{baseUrl}}/videos", "host": ["{{baseUrl}}"], "path": ["videos"]}}
+        },
+        {
+            "name": "2. Register New Client User",
+            "event": [{"listen": "prerequest", "script": {"exec": ["pm.environment.set(\"newUserEmail\", pm.variables.replaceIn('user-{{$randomFirstName}}@example.com'));"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"name\": \"Flow 1 User\",\n    \"email\": \"{{newUserEmail}}\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"]}}
+        },
+        {
+            "name": "3. Login as New User",
+            "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.environment.set(\"clientAuthToken\", jsonData.token);"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"email\": \"{{newUserEmail}}\",\n    \"password\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}}
+        },
+        {
+            "name": "4. Get Video by ID",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{clientAuthToken}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/videos/{{videoId}}",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "videos",
+                        "{{videoId}}"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "5. Like the Video",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{clientAuthToken}}", "type": "string"}]}, "method": "POST", "header": [], "url": {"raw": "{{baseUrl}}/social/videos/{{videoId}}/like", "host": ["{{baseUrl}}"], "path": ["social", "videos", "{{videoId}}", "like"]}}
+        }
+    ],
+    "variable": [{"key": "baseUrl", "value": "http://localhost:8088"}]
+}

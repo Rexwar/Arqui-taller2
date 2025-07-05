@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /usr/src/app
 
 # 1. Copiar solo los archivos de dependencias
-COPY package*.json ./
+COPY user-service/package*.json ./
 
 # 2. Instalar dependencias
 # Esta capa solo se reconstruirá si los archivos package*.json cambian.
@@ -13,8 +13,8 @@ RUN npm install
 
 # 3. Copiar el resto del código fuente y los archivos proto
 COPY src ./src
-COPY __tests__ ./__tests__
-COPY proto ./proto
+COPY src/__tests__ ./__tests__
+COPY src/proto ./proto
 
 # Instalar grpc-health-probe para los chequeos de salud de Docker
 RUN wget -q -O /bin/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.39/grpc_health_probe-linux-amd64 && \

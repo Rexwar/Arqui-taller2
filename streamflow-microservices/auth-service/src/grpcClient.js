@@ -2,7 +2,7 @@ const { promisify } = require('util');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'user-service:50051';
+const USER_SERVICE_URL =  '0.0.0.0:50051';
 const PROTO_PATH = __dirname + '/../proto/users.proto';
 
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -18,7 +18,15 @@ const userClient = new userProto.UserService(USER_SERVICE_URL, grpc.credentials.
 
 const getUserByEmailAsync = promisify(userClient.getUserByEmail).bind(userClient);
 
-module.exports = {
-  getUserByEmailAsync,
-  status: grpc.status,
+const changePasswordAsync = (request) => {
+  return new Promise((resolve, reject) => {
+    userClient.ChangePassword(request, (error, response) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(response);
+    });
+  });
 };
+
+module.exports = { getUserByEmailAsync, changePasswordAsync, status: grpc.status };

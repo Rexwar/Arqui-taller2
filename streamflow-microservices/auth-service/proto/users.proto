@@ -3,11 +3,30 @@ syntax = "proto3";
 package user;
 
 service UserService {
+  // Mutations
   rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (EmptyResponse);
+  rpc ChangePassword(ChangePasswordRequest) returns (EmptyResponse);
+
+  // Queries
   rpc GetUserById(GetUserByIdRequest) returns (UserResponse);
-  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserResponse);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserAuthResponse);
+  rpc ListAllUsers(ListAllUsersRequest) returns (ListAllUsersResponse);
 }
 
+// General Messages
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string role = 5;
+}
+
+message EmptyResponse {}
+
+// CreateUser Messages
 message CreateUserRequest {
   string name = 1;
   string lastname = 2;
@@ -17,21 +36,61 @@ message CreateUserRequest {
   string role = 6;
 }
 
-message GetUserByIdRequest {
-  string id = 1;
-}
-
-message GetUserByEmailRequest {
-  string email = 1;
-}
-
-message UserResponse {
+// UpdateUser Messages
+message UpdateUserRequest {
   string id = 1;
   string name = 2;
   string lastname = 3;
   string email = 4;
-  string password = 5;
+}
+
+// ChangePassword Messages
+message ChangePasswordRequest {
+  string id = 1;
+  string password = 2; // New plain text password
+}
+
+// DeleteUser Messages
+message DeleteUserRequest {
+  string id = 1;
+}
+
+// GetUserById Messages
+message GetUserByIdRequest {
+  string id = 1;     // ID del usuario a consultar
+}
+
+// GetUserById Response
+message GetUserByIdResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string role = 5;
+  string created_at = 6;
+}
+
+// GetUserByEmail Messages
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UserAuthResponse {
+  string id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string password = 5; // Hashed password for auth service
   string role = 6;
-  string created_at = 7;
-  string updated_at = 8;
+}
+
+// ListAllUsers Messages
+message ListAllUsersRequest {
+  // Optional filters
+  string name_lastname = 1; // Search by name and/or lastname
+  string email = 2;         // Search by email
+}
+
+message ListAllUsersResponse {
+  repeated UserResponse users = 1;
 }

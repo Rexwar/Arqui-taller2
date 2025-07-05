@@ -1,0 +1,258 @@
+{
+    "info": {
+        "_postman_id": "flow-08-user-social-interaction",
+        "name": "Flow 08: User Social Interaction on Video",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Register User A",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "pm.environment.set(\"user8A_Email\", pm.variables.replaceIn('user8A-{{$randomFirstName}}@example.com'));"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"User 8A\",\n    \"email\": \"{{user8A_Email}}\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/usuarios",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "usuarios"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Login as User A",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set(\"clientAuthToken8A\", jsonData.token);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"{{user8A_Email}}\",\n    \"password\": \"password123\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "3. Get All Videos and Save One ID",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData && jsonData.length > 0) { pm.environment.set(\"videoId8\", jsonData[0].id); }"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/videos",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "videos"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "4. User A Comments on Video",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{clientAuthToken8A}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"content\": \"This is a comment from User A.\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/social/videos/{{videoId8}}/comments",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "social",
+                        "videos",
+                        "{{videoId8}}",
+                        "comments"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "5. Register User B",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "pm.environment.set(\"user8B_Email\", pm.variables.replaceIn('user8B-{{$randomFirstName}}@example.com'));"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"User 8B\",\n    \"email\": \"{{user8B_Email}}\",\n    \"password\": \"password456\",\n    \"confirmPassword\": \"password456\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/usuarios",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "usuarios"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "6. Login as User B",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set(\"clientAuthToken8B\", jsonData.token);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"{{user8B_Email}}\",\n    \"password\": \"password456\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "7. User B Gets Likes and Comments for the Video",
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{clientAuthToken8B}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/social/videos/{{videoId8}}/details",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "social",
+                        "videos",
+                        "{{videoId8}}",
+                        "details"
+                    ]
+                }
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8088"
+        }
+    ]
+}

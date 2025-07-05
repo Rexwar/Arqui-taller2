@@ -1,0 +1,36 @@
+{
+    "info": {
+        "_postman_id": "flow-15-full-user-lifecycle",
+        "name": "Flow 15: Full User Lifecycle",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Register User",
+            "event": [
+                {"listen": "prerequest", "script": {"exec": ["pm.environment.set(\"user15Email\", pm.variables.replaceIn('user15-{{$randomFirstName}}@example.com'));"], "type": "text/javascript"}},
+                {"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.environment.set(\"userId15\", jsonData.id);"], "type": "text/javascript"}}
+            ],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"name\": \"Lifecycle User\",\n    \"email\": \"{{user15Email}}\",\n    \"password\": \"password123\",\n    \"confirmPassword\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/usuarios", "host": ["{{baseUrl}}"], "path": ["usuarios"]}}
+        },
+        {
+            "name": "2. Login",
+            "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.environment.set(\"user15Token\", jsonData.token);"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"email\": \"{{user15Email}}\",\n    \"password\": \"password123\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}}
+        },
+        {
+            "name": "3. Update Profile",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{user15Token}}", "type": "string"}]}, "method": "PUT", "header": [], "body": {"mode": "raw", "raw": "{\n    \"name\": \"Updated Lifecycle User\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/usuarios/{{userId15}}", "host": ["{{baseUrl}}"], "path": ["usuarios", "{{userId15}}"]}}
+        },
+        {
+            "name": "4. Admin Login",
+            "event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "pm.environment.set(\"adminAuthToken\", jsonData.token);"], "type": "text/javascript"}}],
+            "request": {"method": "POST", "header": [], "body": {"mode": "raw", "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"adminpass\"\n}", "options": {"raw": {"language": "json"}}}, "url": {"raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"]}}
+        },
+        {
+            "name": "5. Admin Deletes User",
+            "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{adminAuthToken}}", "type": "string"}]}, "method": "DELETE", "header": [], "url": {"raw": "{{baseUrl}}/usuarios/{{userId15}}", "host": ["{{baseUrl}}"], "path": ["usuarios", "{{userId15}}"]}}
+        }
+    ],
+    "variable": [{"key": "baseUrl", "value": "http://localhost:8088"}]
+}

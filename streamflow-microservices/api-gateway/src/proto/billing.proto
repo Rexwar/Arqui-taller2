@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package billing;
+
+import "google/protobuf/timestamp.proto";
+
+service BillingService {
+  rpc CreateInvoice(CreateInvoiceRequest) returns (InvoiceResponse);
+  rpc GetInvoiceById(GetInvoiceByIdRequest) returns (InvoiceResponse);
+  rpc UpdateInvoiceStatus(UpdateInvoiceStatusRequest) returns (InvoiceResponse);
+  rpc DeleteInvoice(DeleteInvoiceRequest) returns (DeleteInvoiceResponse);
+  rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+}
+
+message Invoice {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  int32 amount = 4;
+  google.protobuf.Timestamp emission_date = 5;
+  google.protobuf.Timestamp payment_date = 6;
+}
+
+message CreateInvoiceRequest {
+  string user_id = 1;
+  string status = 2;
+  int32 amount = 3;
+}
+
+message InvoiceResponse {
+  string id = 1;
+  string user_id = 2;
+  string status = 3;
+  int32 amount = 4;
+  google.protobuf.Timestamp emission_date = 5;
+  optional google.protobuf.Timestamp payment_date = 6;
+}
+
+message GetInvoiceByIdRequest {
+  string id = 1;
+}
+
+message UpdateInvoiceStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message DeleteInvoiceRequest {
+  string id = 1;
+}
+
+message DeleteInvoiceResponse {
+  string message = 1;
+}
+
+message ListInvoicesRequest {
+  string user_id = 1;
+  optional string status = 2;
+}
+
+message ListInvoicesResponse {
+  repeated InvoiceResponse invoices = 1;
+}
